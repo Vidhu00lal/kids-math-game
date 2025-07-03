@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Help Your Friends! - Math Game</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.21.3/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Mobile-specific optimizations */
+        * {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        
+        input {
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+        }
+        
+        body {
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Prevent zoom on input focus */
+        input[type="number"] {
+            font-size: 16px !important;
+        }
+        
+        /* Enhanced mobile touch targets */
+        .touch-target {
+            min-height: 44px;
+            min-width: 44px;
+        }
+        
+        /* Vibrant animations for mobile */
+        @keyframes pulse-glow {
+            0%, 100% { 
+                box-shadow: 0 0 5px rgba(168, 85, 247, 0.4);
+            }
+            50% { 
+                box-shadow: 0 0 20px rgba(168, 85, 247, 0.8);
+            }
+        }
+        
+        .pulse-glow {
+            animation: pulse-glow 2s infinite;
+        }
+        
+        /* Mobile-first responsive design */
+        @media (max-width: 640px) {
+            .game-container {
+                margin: 0.5rem;
+                padding: 1rem;
+            }
+            
+            .story-text {
+                font-size: 1rem;
+                line-height: 1.5;
+            }
+            
+            .answer-input {
+                font-size: 1.5rem;
+                padding: 1rem;
+            }
+            
+            .action-button {
+                padding: 1rem 1.5rem;
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        
+        // Lucide icons as simple SVG components
+        const Star = ({ className, size = 24 }) => (
+            <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26" />
+            </svg>
+        );
+        
+        const Trophy = ({ className, size = 24 }) => (
+            <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+                <path d="M4 22h16" />
+                <path d="M10 14.66V17c0 .55.47.98.97 1.21C11.56 18.75 12 19.35 12 20s-.44 1.25-1.03 1.79c-.5.23-.97.66-.97 1.21v.36c0 .55.47 1.02 1.02 1.02h1.96c.55 0 1.02-.47 1.02-1.02v-.36c0-.55-.47-.98-.97-1.21C12.44 21.25 12 20.65 12 20s.44-1.25 1.03-1.79c.5-.23.97-.66.97-1.21V14.66" />
+                <path d="M9 9h6v5a3 3 0 0 1-6 0V9Z" />
+            </svg>
+        );
+        
+        const Heart = ({ className, size = 24 }) => (
+            <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+        );
+        
+        const Clock = ({ className, size = 24 }) => (
+            <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12,6 12,12 16,14" />
+            </svg>
+        );
+        
+        const Sparkles = ({ className, size = 24 }) => (
+            <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.582a.5.5 0 0 1 0 .963L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0L9.937 15.5Z" />
+            </svg>
+        );
+
+        const KidsMathGame = () => {
+            const [currentQuestion, setCurrentQuestion] = useState(null);
+            const [userAnswer, setUserAnswer] = useState('');
+            const [score, setScore] = useState(0);
+            const [lives, setLives] = useState(3);
+            const [level, setLevel] = useState(1);
+            const [feedback, setFeedback] = useState('');
+            const [showFeedback, setShowFeedback] = useState(false);
+            const [gameOver, setGameOver] = useState(false);
+            const [difficulty, setDifficulty] = useState('easy');
+            const [timeLeft, setTimeLeft] = useState(40);
+            const [timerActive, setTimerActive] = useState(false);
+
+            const storyTemplates = {
+                addition: [
+                    {
+                        template: "Ethan has {num1} 🍎 apples and his friend gives him {num2} more. How many apples does Ethan have now?",
+                        icon: "🍎"
+                    },
+                    {
+                        template: "There are {num1} 🚗 cars in Keanu's toy garage. Then he adds {num2} more cars. How many cars are there in total?",
+                        icon: "🚗"
+                    },
+                    {
+                        template: "Ain collected {num1} ⭐ stickers and bought {num2} more at the store. How many stickers does Ain have altogether?",
+                        icon: "⭐"
+                    },
+                    {
+                        template: "In Jiggu's garden, there are {num1} 🌸 flowers. The gardener plants {num2} more flowers. How many flowers are there now?",
+                        icon: "🌸"
+                    },
+                    {
+                        template: "Kannappi has {num1} 🍪 cookies and her mom bakes {num2} more. How many cookies does Kannappi have in total?",
+                        icon: "🍪"
+                    }
+                ],
+                subtraction: [
+                    {
+                        template: "Keanu had {num1} 🎈 balloons but {num2} flew away. How many balloons does Keanu have left?",
+                        icon: "🎈"
+                    },
+                    {
+                        template: "There were {num1} 🐦 birds on Ethan's tree. {num2} birds flew away. How many birds are still on the tree?",
+                        icon: "🐦"
+                    },
+                    {
+                        template: "Kaira had {num1} 🍭 candies and gave {num2} to her sister. How many candies does Kaira have now?",
+                        icon: "🍭"
+                    },
+                    {
+                        template: "In Ikku's room, there were {num1} 🎁 presents. {num2} were opened today. How many presents are left?",
+                        icon: "🎁"
+                    },
+                    {
+                        template: "Sayanth's library had {num1} 📚 books. {num2} books were borrowed. How many books are still in the library?",
+                        icon: "📚"
+                    }
+                ],
+                multiplication: [
+                    {
+                        template: "Each box contains {num1} 🍰 cupcakes. If Ethan has {num2} boxes, how many cupcakes does he have in total?",
+                        icon: "🍰"
+                    },
+                    {
+                        template: "There are {num1} 🚲 bicycles in Keanu's shop, and each bicycle has {num2} wheels. How many wheels are there altogether?",
+                        icon: "🚲"
+                    },
+                    {
+                        template: "In Yash's classroom, there are {num1} tables with {num2} 🖍️ crayons on each table. How many crayons are there in total?",
+                        icon: "🖍️"
+                    },
+                    {
+                        template: "Each pizza has {num1} 🍕 slices. If Ain orders {num2} pizzas, how many slices will she have?",
+                        icon: "🍕"
+                    },
+                    {
+                        template: "There are {num1} bags in Jiggu's store, each containing {num2} 🍊 oranges. How many oranges are there in total?",
+                        icon: "🍊"
+                    }
+                ],
+                division: [
+                    {
+                        template: "Ethan has {num1} 🖍️ crayons to share equally among {num2} students. How many crayons will each student get?",
+                        icon: "🖍️"
+                    },
+                    {
+                        template: "There are {num1} 🍪 cookies to be packed equally into {num2} boxes by Keanu. How many cookies will go in each box?",
+                        icon: "🍪"
+                    },
+                    {
+                        template: "Kannappi has {num1} ⭐ stickers to give equally to {num2} children. How many stickers will each child receive?",
+                        icon: "⭐"
+                    },
+                    {
+                        template: "There are {num1} 🎈 balloons to be divided equally among {num2} parties by Ikku. How many balloons will each party get?",
+                        icon: "🎈"
+                    },
+                    {
+                        template: "Sayanth has {num1} 🍎 apples to put equally in {num2} baskets. How many apples will go in each basket?",
+                        icon: "🍎"
+                    }
+                ]
+            };
+
+            const difficulties = {
+                easy: { max: 10, operations: ['addition', 'subtraction'] },
+                medium: { max: 20, operations: ['addition', 'subtraction', 'multiplication'] },
+                hard: { max: 50, operations: ['addition', 'subtraction', 'multiplication', 'division'] }
+            };
+
+            const generateQuestion = () => {
+                const { max, operations } = difficulties[difficulty];
+                const operation = operations[Math.floor(Math.random() * operations.length)];
+                let num1, num2, answer;
+
+                switch (operation) {
+                    case 'addition':
+                        num1 = Math.floor(Math.random() * max) + 1;
+                        num2 = Math.floor(Math.random() * max) + 1;
+                        answer = num1 + num2;
+                        break;
+                    case 'subtraction':
+                        num1 = Math.floor(Math.random() * max) + 1;
+                        num2 = Math.floor(Math.random() * num1) + 1;
+                        answer = num1 - num2;
+                        break;
+                    case 'multiplication':
+                        num1 = Math.floor(Math.random() * 10) + 1;
+                        num2 = Math.floor(Math.random() * 10) + 1;
+                        answer = num1 * num2;
+                        break;
+                    case 'division':
+                        answer = Math.floor(Math.random() * 10) + 1;
+                        num2 = Math.floor(Math.random() * 10) + 1;
+                        num1 = answer * num2;
+                        break;
+                }
+
+                const templates = storyTemplates[operation];
+                const selectedTemplate = templates[Math.floor(Math.random() * templates.length)];
+                const storyText = selectedTemplate.template.replace('{num1}', num1).replace('{num2}', num2);
+
+                return { 
+                    num1, 
+                    num2, 
+                    operation, 
+                    answer, 
+                    story: storyText,
+                    icon: selectedTemplate.icon
+                };
+            };
+
+            const checkAnswer = () => {
+                if (userAnswer === '') return;
+
+                setTimerActive(false);
+                const isCorrect = parseInt(userAnswer) === currentQuestion.answer;
+                
+                if (isCorrect) {
+                    setScore(score + 10);
+                    const encouragements = [
+                        '🎉 Fantastic! You helped your friend perfectly!',
+                        '⭐ Amazing work! You\'re such a good helper!',
+                        '🌟 Brilliant! Your friend is so grateful!',
+                        '🚀 Excellent! You solved their problem!',
+                        '💫 Wonderful! You\'re the best problem solver!'
+                    ];
+                    setFeedback(encouragements[Math.floor(Math.random() * encouragements.length)]);
+                    
+                    if (score + 10 >= level * 50) {
+                        setLevel(level + 1);
+                        setFeedback('🎊 LEVEL UP! You\'re becoming a superhero helper!');
+                    }
+                } else {
+                    setLives(lives - 1);
+                    setFeedback(`😊 Good try! The answer was ${currentQuestion.answer}. Let's help another friend!`);
+                    if (lives - 1 === 0) {
+                        setGameOver(true);
+                        setFeedback('🎮 You helped so many friends! You\'re amazing! Want to help more?');
+                    }
+                }
+
+                setShowFeedback(true);
+                setTimeout(() => {
+                    setShowFeedback(false);
+                    if (lives > 0 || isCorrect) {
+                        setCurrentQuestion(generateQuestion());
+                        setUserAnswer('');
+                        setTimeLeft(40);
+                        setTimerActive(true);
+                    }
+                }, 3000);
+            };
+
+            const resetGame = () => {
+                setScore(0);
+                setLives(3);
+                setLevel(1);
+                setGameOver(false);
+                setShowFeedback(false);
+                setUserAnswer('');
+                setTimeLeft(40);
+                setTimerActive(false);
+                setCurrentQuestion(generateQuestion());
+            };
+
+            useEffect(() => {
+                setCurrentQuestion(generateQuestion());
+                setTimeLeft(40);
+                setTimerActive(true);
+            }, [difficulty]);
+
+            // Timer effect
+            useEffect(() => {
+                let interval;
+                if (timerActive && timeLeft > 0) {
+                    interval = setInterval(() => {
+                        setTimeLeft(timeLeft - 1);
+                    }, 1000);
+                } else if (timeLeft === 0 && timerActive) {
+                    // Time's up!
+                    setTimerActive(false);
+                    setLives(lives - 1);
+                    setFeedback(`⏰ Time's up! The answer was ${currentQuestion.answer}. Try to help faster next time!`);
+                    if (lives - 1 === 0) {
+                        setGameOver(true);
+                        setFeedback('🎮 You tried your best to help! Practice makes perfect! Want to try again?');
+                    }
+                    setShowFeedback(true);
+                    setTimeout(() => {
+                        setShowFeedback(false);
+                        if (lives - 1 > 0) {
+                            setCurrentQuestion(generateQuestion());
+                            setUserAnswer('');
+                            setTimeLeft(40);
+                            setTimerActive(true);
+                        }
+                    }, 3000);
+                }
+                return () => clearInterval(interval);
+            }, [timerActive, timeLeft, lives, currentQuestion]);
+
+            const handleKeyPress = (e) => {
+                if (e.key === 'Enter') {
+                    checkAnswer();
+                }
+            };
+
+            const getBackgroundGradient = () => {
+                const gradients = [
+                    'from-purple-400 via-pink-400 to-red-400',
+                    'from-blue-400 via-purple-400 to-pink-400',
+                    'from-green-400 via-blue-400 to-purple-400',
+                    'from-yellow-400 via-orange-400 to-red-400',
+                    'from-pink-400 via-red-400 to-orange-400'
+                ];
+                return gradients[level % gradients.length];
+            };
+
+            return (
+                <div className={`min-h-screen bg-gradient-to-br ${getBackgroundGradient()} flex items-center justify-center p-2 transition-all duration-1000`}>
+                    <div className="bg-white rounded-3xl shadow-2xl p-4 sm:p-8 max-w-lg w-full game-container transform hover:scale-105 transition-all duration-300">
+                        {/* Header */}
+                        <div className="text-center mb-6">
+                            <h1 className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
+                                Help Your Friends! 🤝✨
+                            </h1>
+                            <div className="flex justify-center items-center gap-2 sm:gap-4 mb-4 flex-wrap">
+                                <div className="flex items-center gap-1 bg-yellow-100 rounded-full px-2 sm:px-3 py-1 touch-target">
+                                    <Star className="text-yellow-500" size={20} />
+                                    <span className="font-bold text-lg text-yellow-700">{score}</span>
+                                </div>
+                                <div className="flex items-center gap-1 bg-orange-100 rounded-full px-2 sm:px-3 py-1 touch-target">
+                                    <Trophy className="text-orange-500" size={20} />
+                                    <span className="font-bold text-lg text-orange-700">Level {level}</span>
+                                </div>
+                                <div className="flex items-center gap-1 bg-red-100 rounded-full px-2 sm:px-3 py-1 touch-target">
+                                    {[...Array(3)].map((_, i) => (
+                                        <Heart
+                                            key={i}
+                                            className={`${i < lives ? 'text-red-500' : 'text-gray-300'}`}
+                                            size={20}
+                                        />
+                                    ))}
+                                </div>
+                                <div className={`flex items-center gap-1 rounded-full px-2 sm:px-3 py-1 touch-target ${
+                                    timeLeft <= 10 ? 'bg-red-100 pulse-glow' : 'bg-blue-100'
+                                }`}>
+                                    <Clock className={`${timeLeft <= 10 ? 'text-red-500' : 'text-blue-500'}`} size={20} />
+                                    <span className={`font-bold text-lg ${
+                                        timeLeft <= 10 ? 'text-red-700' : 'text-blue-700'
+                                    }`}>{timeLeft}s</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Difficulty Selector */}
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Choose Your Helper Level:</label>
+                            <select
+                                value={difficulty}
+                                onChange={(e) => setDifficulty(e.target.value)}
+                                className="w-full p-3 border-2 border-purple-300 rounded-lg focus:border-purple-500 focus:outline-none bg-gradient-to-r from-purple-50 to-pink-50 touch-target"
+                            >
+                                <option value="easy">🌟 Beginner Helper (Numbers 1-10)</option>
+                                <option value="medium">🚀 Super Helper (Numbers 1-20)</option>
+                                <option value="hard">🏆 Hero Helper (Numbers 1-50)</option>
+                            </select>
+                        </div>
+
+                        {!gameOver ? (
+                            <>
+                                {/* Story Question */}
+                                {currentQuestion && (
+                                    <div className="text-center mb-6">
+                                        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-4 sm:p-6 mb-4 border-2 border-purple-200">
+                                            <div className="text-5xl sm:text-6xl mb-4">{currentQuestion.icon}</div>
+                                            <div className="text-base sm:text-lg font-medium text-gray-800 mb-4 leading-relaxed story-text">
+                                                {currentQuestion.story}
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="bg-white rounded-xl border-2 border-purple-200 p-4 mb-4">
+                                            <label className="block text-sm font-medium text-gray-700 mb-2">Your Answer:</label>
+                                            <input
+                                                type="number"
+                                                value={userAnswer}
+                                                onChange={(e) => setUserAnswer(e.target.value)}
+                                                onKeyPress={handleKeyPress}
+                                                placeholder="Type your answer here..."
+                                                className="w-full p-3 sm:p-4 text-2xl sm:text-3xl text-center border-2 border-purple-300 rounded-lg focus:border-purple-500 focus:outline-none font-bold answer-input touch-target"
+                                            />
+                                        </div>
+                                        
+                                        <button
+                                            onClick={checkAnswer}
+                                            disabled={userAnswer === '' || !timerActive}
+                                            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl hover:from-purple-600 hover:to-pink-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 action-button touch-target"
+                                        >
+                                            {timerActive ? 'Help My Friend! 🎯' : 'Time\'s Up! ⏰'}
+                                        </button>
+                                    </div>
+                                )}
+
+                                {/* Feedback */}
+                                {showFeedback && (
+                                    <div className="text-center mb-4">
+                                        <div className="bg-gradient-to-r from-green-100 to-blue-100 rounded-xl p-4 border-2 border-green-200 pulse-glow">
+                                            <p className="text-lg font-medium text-gray-800">{feedback}</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            /* Game Over Screen */
+                            <div className="text-center">
+                                <div className="bg-gradient-to-r from-yellow-100 to-orange-100 rounded-2xl p-6 mb-4 border-2 border-yellow-200">
+                                    <Sparkles className="mx-auto text-yellow-500 mb-4" size={64} />
+                                    <h2 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">You're a Super Helper! 🦸‍♂️</h2>
+                                    <p className="text-lg sm:text-xl text-gray-600 mb-2">Friends Helped: {Math.floor(score / 10)}</p>
+                                    <p className="text-lg sm:text-xl text-gray-600 mb-2">Helper Level: {level}</p>
+                                    <p className="text-base sm:text-lg text-gray-500">You solved so many problems for your friends!</p>
+                                </div>
+                                
+                                <button
+                                    onClick={resetGame}
+                                    className="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl hover:from-green-600 hover:to-blue-600 transition-all duration-300 transform hover:scale-105 action-button touch-target"
+                                >
+                                    Help More Friends! 🚀
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Instructions */}
+                        <div className="mt-6 text-center">
+                            <p className="text-xs sm:text-sm text-gray-600 bg-gray-50 rounded-lg p-3">
+                                💡 Read each friend's problem carefully! You have 40 seconds to help them. Tap the answer button or press Enter!
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<KidsMathGame />, document.getElementById('root'));
+    </script>
+</body>
+</html>
