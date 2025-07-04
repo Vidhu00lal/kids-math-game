@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finding the Furry Cat - Interactive Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background: linear-gradient(135deg, #87CEEB 0%, #98FB98 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .game-container {
+            max-width: 1000px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .score-board {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(255,255,255,0.2);
+            padding: 10px;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .score-item {
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .game-area {
+            padding: 30px;
+        }
+
+        .game-selector {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .game-button {
+            background: linear-gradient(45deg, #FF9A9E, #FECFEF);
+            border: none;
+            padding: 15px 25px;
+            border-radius: 15px;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #333;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .game-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        .game-button.active {
+            background: linear-gradient(45deg, #4ECDC4, #44A08D);
+            color: white;
+        }
+
+        .game-content {
+            min-height: 400px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Cat Finding Game Styles */
+        .scene {
+            position: relative;
+            width: 600px;
+            height: 400px;
+            background: linear-gradient(to bottom, #87CEEB 0%, #98FB98 60%, #228B22 100%);
+            border-radius: 15px;
+            margin: 20px auto;
+            overflow: hidden;
+            border: 3px solid #8B4513;
+        }
+
+        .house {
+            position: absolute;
+            width: 200px;
+            height: 150px;
+            background: #DEB887;
+            bottom: 50px;
+            right: 100px;
+            border-radius: 10px;
+        }
+
+        .roof {
+            position: absolute;
+            top: -30px;
+            left: -20px;
+            width: 0;
+            height: 0;
+            border-left: 120px solid transparent;
+            border-right: 120px solid transparent;
+            border-bottom: 60px solid #8B4513;
+        }
+
+        .tree {
+            position: absolute;
+            bottom: 50px;
+            left: 50px;
+        }
+
+        .trunk {
+            width: 30px;
+            height: 100px;
+            background: #8B4513;
+            margin: 0 auto;
+        }
+
+        .leaves {
+            width: 120px;
+            height: 120px;
+            background: #228B22;
+            border-radius: 50%;
+            margin-bottom: -20px;
+        }
+
+        .cat {
+            position: absolute;
+            width: 40px;
+            height: 30px;
+            background: #FFA500;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .cat::before {
+            content: '🐱';
+            position: absolute;
+            font-size: 30px;
+            top: -5px;
+            left: 5px;
+        }
+
+        .cat:hover {
+            transform: scale(1.1);
+        }
+
+        .hiding-spot {
+            position: absolute;
+            border: 3px dashed #FF6B6B;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 107, 107, 0.1);
+        }
+
+        .hiding-spot:hover {
+            background: rgba(255, 107, 107, 0.3);
+            transform: scale(1.05);
+        }
+
+        .hiding-spot.correct {
+            border-color: #4ECDC4;
+            background: rgba(78, 205, 196, 0.3);
+        }
+
+        /* Question Panel */
+        .question-panel {
+            background: linear-gradient(45deg, #FFE082, #FFCC02);
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .question {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .options {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .option {
+            background: white;
+            border: 3px solid #4ECDC4;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .option:hover {
+            background: #4ECDC4;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .option.correct {
+            background: #4ECDC4;
+            color: white;
+        }
+
+        .option.wrong {
+            background: #FF6B6B;
+            color: white;
+        }
+
+        /* Sorting Game Styles */
+        .sorting-area {
+            display: flex;
+            justify-content: space-around;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .sorting-box {
+            background: linear-gradient(45deg, #E1F5FE, #B3E5FC);
+            border: 3px dashed #4ECDC4;
+            border-radius: 15px;
+            width: 150px;
+            height: 150px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            min-height: 100px;
+        }
+
+        .sorting-box h3 {
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .items-to-sort {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        /* Touch-friendly interactions */
+        .sortable-item {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+
+        .sortable-item:hover, .sortable-item:active {
+            transform: scale(1.1);
+        }
+
+        .sortable-item.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+            transform: scale(1.2);
+        }
+
+        /* Enhanced touch targets */
+        .option, .game-button, .next-button {
+            min-height: 44px;
+            min-width: 44px;
+            touch-action: manipulation;
+        }
+
+        /* Mobile-specific hiding spot adjustments */
+        .hiding-spot {
+            position: absolute;
+            border: 3px dashed #FF6B6B;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 107, 107, 0.1);
+            min-width: 40px;
+            min-height: 40px;
+        }
+
+        .red { background: #FF6B6B; }
+        .blue { background: #4ECDC4; }
+        .green { background: #98FB98; }
+        .yellow { background: #FFE082; }
+
+        .feedback {
+            text-align: center;
+            font-size: 1.3em;
+            font-weight: bold;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            transition: all 0.5s ease;
+        }
+
+        .feedback.correct {
+            background: #4ECDC4;
+            color: white;
+        }
+
+        .feedback.wrong {
+            background: #FF6B6B;
+            color: white;
+        }
+
+        .next-button {
+            background: linear-gradient(45deg, #4ECDC4, #44A08D);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 20px 0;
+        }
+
+        .next-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        .celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #FFE082;
+            animation: fall 3s linear infinite;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .instructions {
+            background: linear-gradient(45deg, #F8BBD9, #E1F5FE);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.1em;
+            color: #333;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .score-board {
+                flex-direction: row;
+                justify-content: space-around;
+            }
+            
+            .score-item {
+                font-size: 1em;
+            }
+            
+            .scene {
+                width: 100%;
+                max-width: 350px;
+                height: 250px;
+            }
+            
+            .house {
+                width: 120px;
+                height: 90px;
+                right: 50px;
+            }
+            
+            .roof {
+                left: -15px;
+                border-left: 75px solid transparent;
+                border-right: 75px solid transparent;
+                border-bottom: 40px solid #8B4513;
+            }
+            
+            .tree {
+                left: 30px;
+            }
+            
+            .leaves {
+                width: 80px;
+                height: 80px;
+            }
+            
+            .trunk {
+                width: 20px;
+                height: 70px;
+            }
+            
+            .cat {
+                width: 30px;
+                height: 25px;
+            }
+            
+            .cat::before {
+                font-size: 25px;
+                top: -3px;
+                left: 3px;
+            }
+            
+            .game-selector {
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+            
+            .game-button {
+                width: 200px;
+                padding: 12px 20px;
+                font-size: 1em;
+            }
+            
+            .sorting-area {
+                flex-direction: column;
+                align-items: center;
+                gap: 15px;
+            }
+            
+            .sorting-box {
+                width: 120px;
+                height: 120px;
+            }
+            
+            .question {
+                font-size: 1.2em;
+            }
+            
+            .options {
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+            
+            .option {
+                width: 200px;
+                text-align: center;
+            }
+            
+            .sortable-item {
+                width: 50px;
+                height: 50px;
+                font-size: 1.5em;
+            }
+            
+            .instructions {
+                font-size: 1em;
+                padding: 12px;
+            }
+            
+            .feedback {
+                font-size: 1.1em;
+                padding: 12px;
+            }
+            
+            .next-button {
+                padding: 12px 25px;
+                font-size: 1.1em;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.5em;
+            }
+            
+            .scene {
+                max-width: 300px;
+                height: 200px;
+            }
+            
+            .house {
+                width: 90px;
+                height: 70px;
+                right: 30px;
+            }
+            
+            .roof {
+                left: -10px;
+                border-left: 55px solid transparent;
+                border-right: 55px solid transparent;
+                border-bottom: 30px solid #8B4513;
+            }
+            
+            .leaves {
+                width: 60px;
+                height: 60px;
+            }
+            
+            .trunk {
+                width: 15px;
+                height: 50px;
+            }
+            
+            .game-button {
+                width: 180px;
+                font-size: 0.9em;
+            }
+            
+            .question {
+                font-size: 1.1em;
+            }
+            
+            .option {
+                width: 180px;
+                padding: 8px 15px;
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1>🐱 Finding the Furry Cat! 🐱</h1>
+            <div class="score-board">
+                <div class="score-item">
+                    <div>Score</div>
+                    <div id="score">0</div>
+                </div>
+                <div class="score-item">
+                    <div>Level</div>
+                    <div id="level">1</div>
+                </div>
+                <div class="score-item">
+                    <div>⭐ Stars</div>
+                    <div id="stars">0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="game-area">
+            <div class="game-selector">
+                <button class="game-button active" onclick="switchGame('position')">🔍 Find the Cat</button>
+                <button class="game-button" onclick="switchGame('questions')">❓ Position Quiz</button>
+                <button class="game-button" onclick="switchGame('sorting')">🎨 Color Sorting</button>
+                <button class="game-button" onclick="switchGame('train')">🚂 Train Game</button>
+            </div>
+
+            <div class="game-content" id="game-content">
+                <!-- Game content will be dynamically loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <div class="celebration" id="celebration"></div>
+
+    <script>
+        // Game state
+        let currentGame = 'position';
+        let score = 0;
+        let level = 1;
+        let stars = 0;
+        let currentQuestion = 0;
+
+        // Questions for different games
+        const positionQuestions = [
+            {
+                question: "Where is the cat hiding?",
+                positions: ['under', 'above', 'inside', 'outside'],
+                correct: 'under',
+                catPosition: {bottom: '50px', left: '50px'},
+                spotPosition: {bottom: '20px', left: '40px', width: '60px', height: '40px'}
+            },
+            {
+                question: "The cat is sitting __ the tree",
+                positions: ['under', 'above', 'inside', 'on'],
+                correct: 'on',
+                catPosition: {bottom: '170px', left: '100px'},
+                spotPosition: {bottom: '150px', left: '90px', width: '80px', height: '40px'}
+            },
+            {
+                question: "Find the cat __ the house",
+                positions: ['inside', 'outside', 'above', 'below'],
+                correct: 'inside',
+                catPosition: {bottom: '100px', right: '150px'},
+                spotPosition: {bottom: '80px', right: '180px', width: '120px', height: '80px'}
+            }
+        ];
+
+        const quizQuestions = [
+            {
+                question: "Which color is at the TOP of the Indian flag?",
+                options: ["Green", "White", "Saffron", "Blue"],
+                correct: "Saffron"
+            },
+            {
+                question: "Where do you put your shoes?",
+                options: ["Inside the room", "Outside the room", "On the bed", "Under the table"],
+                correct: "Outside the room"
+            },
+            {
+                question: "The bird is __ the tree",
+                options: ["under", "inside", "on", "below"],
+                correct: "on"
+            },
+            {
+                question: "Which color is BELOW white on the Indian flag?",
+                options: ["Saffron", "Green", "Blue", "Red"],
+                correct: "Green"
+            }
+        ];
+
+        const sortingLevels = [
+            {
+                instruction: "Sort the items by COLOR",
+                items: [
+                    {id: 1, color: 'red', symbol: '🔴', category: 'red'},
+                    {id: 2, color: 'blue', symbol: '🔵', category: 'blue'},
+                    {id: 3, color: 'red', symbol: '❤️', category: 'red'},
+                    {id: 4, color: 'blue', symbol: '💙', category: 'blue'},
+                    {id: 5, color: 'green', symbol: '💚', category: 'green'},
+                    {id: 6, color: 'green', symbol: '🟢', category: 'green'}
+                ],
+                categories: ['Red Items', 'Blue Items', 'Green Items']
+            },
+            {
+                instruction: "Sort the items by SHAPE",
+                items: [
+                    {id: 1, color: 'yellow', symbol: '⭐', category: 'stars'},
+                    {id: 2, color: 'blue', symbol: '⭐', category: 'stars'},
+                    {id: 3, color: 'red', symbol: '💎', category: 'diamonds'},
+                    {id: 4, color: 'green', symbol: '💎', category: 'diamonds'},
+                    {id: 5, color: 'yellow', symbol: '🔶', category: 'diamonds'},
+                    {id: 6, color: 'blue', symbol: '⭐', category: 'stars'}
+                ],
+                categories: ['Stars', 'Diamonds', 'Others']
+            }
+        ];
+
+        // Initialize game
+        function initGame() {
+            switchGame('position');
+        }
+
+        // Switch between games
+        function switchGame(gameType) {
+            // Update active button
+            document.querySelectorAll('.game-button').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            currentGame = gameType;
+            currentQuestion = 0;
+            
+            switch(gameType) {
+                case 'position':
+                    loadPositionGame();
+                    break;
+                case 'questions':
+                    loadQuizGame();
+                    break;
+                case 'sorting':
+                    loadSortingGame();
+                    break;
+                case 'train':
+                    loadTrainGame();
+                    break;
+            }
+        }
+
+        // Position/Cat finding game
+        function loadPositionGame() {
+            const question = positionQuestions[currentQuestion % positionQuestions.length];
+            
+            document.getElementById('game-content').innerHTML = `
+                <div class="instructions">
+                    🎯 Click on the correct hiding spot to find the furry cat!
+                </div>
+                
+                <div class="question-panel">
+                    <div class="question">${question.question}</div>
+                    <div class="options">
+                        ${question.positions.map(pos => 
+                            `<div class="option" onclick="checkPosition('${pos}')">${pos}</div>`
+                        ).join('')}
+                    </div>
+                </div>
+
+                <div class="scene">
+                    <!-- House -->
+                    <div class="house">
+                        <div class="roof"></div>
+                    </div>
+                    
+                    <!-- Tree -->
+                    <div class="tree">
+                        <div class="leaves"></div>
+                        <div class="trunk"></div>
+                    </div>
+                    
+                    <!-- Cat (hidden initially) -->
+                    <div class="cat" id="cat" style="display: none; bottom: ${question.catPosition.bottom}; left: ${question.catPosition.left || 'auto'}; right: ${question.catPosition.right || 'auto'};" onclick="foundCat()"></div>
+                    
+                    <!-- Hiding spot -->
+                    <div class="hiding-spot" id="hiding-spot" 
+                         style="bottom: ${question.spotPosition.bottom}; 
+                                left: ${question.spotPosition.left || 'auto'}; 
+                                right: ${question.spotPosition.right || 'auto'}; 
+                                width: ${question.spotPosition.width}; 
+                                height: ${question.spotPosition.height};"
+                         onclick="checkHidingSpot()"></div>
+                </div>
+
+                <div class="feedback" id="feedback"></div>
+                <button class="next-button" id="next-btn" style="display: none;" onclick="nextPositionQuestion()">Next Question! 🎉</button>
+            `;
+        }
+
+        function checkPosition(selectedPos) {
+            const question = positionQuestions[currentQuestion % positionQuestions.length];
+            const feedback = document.getElementById('feedback');
+            const options = document.querySelectorAll('.option');
+            
+            options.forEach(opt => {
+                if (opt.textContent === selectedPos) {
+                    if (selectedPos === question.correct) {
+                        opt.classList.add('correct');
+                        feedback.textContent = "Great! Now click on the hiding spot to find the cat! 🎉";
+                        feedback.className = 'feedback correct';
+                        document.getElementById('hiding-spot').style.display = 'block';
+                    } else {
+                        opt.classList.add('wrong');
+                        feedback.textContent = "Try again! Think about where the cat might be hiding. 🤔";
+                        feedback.className = 'feedback wrong';
+                    }
+                }
+            });
+        }
+
+        function checkHidingSpot() {
+            document.getElementById('cat').style.display = 'block';
+            document.getElementById('hiding-spot').classList.add('correct');
+            document.getElementById('feedback').textContent = "You found the furry cat! 🐱✨";
+            document.getElementById('next-btn').style.display = 'block';
+            updateScore(10);
+            celebrate();
+        }
+
+        function foundCat() {
+            document.getElementById('feedback').textContent = "Meow! You found me! 🐱💕";
+        }
+
+        function nextPositionQuestion() {
+            currentQuestion++;
+            loadPositionGame();
+        }
+
+        // Quiz game
+        function loadQuizGame() {
+            const question = quizQuestions[currentQuestion % quizQuestions.length];
+            
+            document.getElementById('game-content').innerHTML = `
+                <div class="instructions">
+                    🧠 Answer the questions about positions and colors!
+                </div>
+                
+                <div class="question-panel">
+                    <div class="question">${question.question}</div>
+                    <div class="options">
+                        ${question.options.map(option => 
+                            `<div class="option" onclick="checkQuizAnswer('${option}')">${option}</div>`
+                        ).join('')}
+                    </div>
+                </div>
+
+                <div class="feedback" id="quiz-feedback"></div>
+                <button class="next-button" id="quiz-next-btn" style="display: none;" onclick="nextQuizQuestion()">Next Question! 🎉</button>
+            `;
+        }
+
+        function checkQuizAnswer(selectedAnswer) {
+            const question = quizQuestions[currentQuestion % quizQuestions.length];
+            const feedback = document.getElementById('quiz-feedback');
+            const options = document.querySelectorAll('.option');
+            
+            options.forEach(opt => {
+                if (opt.textContent === selectedAnswer) {
+                    if (selectedAnswer === question.correct) {
+                        opt.classList.add('correct');
+                        feedback.textContent = "Excellent! That's the correct answer! 🎉";
+                        feedback.className = 'feedback correct';
+                        updateScore(15);
+                        celebrate();
+                    } else {
+                        opt.classList.add('wrong');
+                        feedback.textContent = "Not quite right. Try again! 🤔";
+                        feedback.className = 'feedback wrong';
+                    }
+                }
+            });
+            
+            setTimeout(() => {
+                document.getElementById('quiz-next-btn').style.display = 'block';
+            }, 1000);
+        }
+
+        function nextQuizQuestion() {
+            currentQuestion++;
+            loadQuizGame();
+        }
+
+        // Sorting game
+        function loadSortingGame() {
+            const sortingLevel = sortingLevels[currentQuestion % sortingLevels.length];
+            
+            document.getElementById('game-content').innerHTML = `
+                <div class="instructions">
+                    🎨 ${sortingLevel.instruction}
+                </div>
+                
+                <div class="items-to-sort" id="items-to-sort">
+                    ${sortingLevel.items.map(item => 
+                        `<div class="sortable-item ${item.color}" 
+                              draggable="true" 
+                              data-category="${item.category}"
+                              ondragstart="drag(event)"
+                              ondragend="dragEnd(event)">
+                            ${item.symbol}
+                         </div>`
+                    ).join('')}
+                </div>
+
+                <div class="sorting-area">
+                    ${sortingLevel.categories.map(category => 
+                        `<div class="sorting-box" 
+                              data-category="${category.toLowerCase().split(' ')[0]}"
+                              ondrop="drop(event)" 
+                              ondragover="allowDrop(event)">
+                            <h3>${category}</h3>
+                         </div>`
+                    ).join('')}
+                </div>
+
+                <div class="feedback" id="sorting-feedback"></div>
+                <button class="next-button" id="sorting-next-btn" style="display: none;" onclick="nextSortingLevel()">Next Level! 🎉</button>
+            `;
+        }
+
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("text", ev.target.getAttribute('data-category'));
+            ev.target.classList.add('dragging');
+        }
+
+        function dragEnd(ev) {
+            ev.target.classList.remove('dragging');
+        }
+
+        function drop(ev) {
+            ev.preventDefault();
+            const draggedCategory = ev.dataTransfer.getData("text");
+            const dropZoneCategory = ev.currentTarget.getAttribute('data-category');
+            const draggedElement = document.querySelector(`.sortable-item.dragging`);
+            
+            if (draggedCategory === dropZoneCategory) {
+                ev.currentTarget.appendChild(draggedElement);
+                checkSortingComplete();
+                updateScore(5);
+            } else {
+                document.getElementById('sorting-feedback').textContent = "Try a different group! 🤔";
+                document.getElementById('sorting-feedback').className = 'feedback wrong';
+            }
+        }
+
+        function checkSortingComplete() {
+            const itemsToSort = document.getElementById('items-to-sort');
+            if (itemsToSort.children.length === 0) {
+                document.getElementById('sorting-feedback').textContent = "Perfect sorting! You're amazing! 🎉";
+                document.getElementById('sorting-feedback').className = 'feedback correct';
+                document.getElementById('sorting-next-btn').style.display = 'block';
+                celebrate();
+                updateScore(20);
+            }
+        }
+
+        function nextSortingLevel() {
+            currentQuestion++;
+            loadSortingGame();
+        }
+
+        // Train game
+        function loadTrainGame() {
+            document.getElementById('game-content').innerHTML = `
+                <div class="instructions">
+                    🚂 Learn about BEFORE and AFTER with our train!
+                </div>
+                
+                <div style="text-align: center; margin: 20px 0;">
+                    <div style="display: inline-flex; align-items: center; gap: 10px; background: linear-gradient(45deg, #FFE082, #FFCC02); padding: 20px; border-radius: 15px;">
+                        <div style="background: #FF6B6B; padding: 10px; border-radius: 10px; font-size: 2em;">🚂</div>
+                        <div style="background: #4ECDC4; padding: 10px; border-radius: 10px; font-size: 1.5em;">🚃</div>
+                        <div style="background: #98FB98; padding: 10px; border-radius: 10px; font-size: 1.5em;">🚃</div>
+                        <div style="background: #FFE082; padding: 10px; border-radius: 10px; font-size: 1.5em;">🚃</div>
+                        <div style="background: #FF9A9E; padding: 10px; border-radius: 10px; font-size: 1.5em;">🚃</div>
+                    </div>
+                </div>
+
+                <div class="question-panel">
+                    <div class="question">How many bogies are AFTER the engine?</div>
+                    <div class="options">
+                        <div class="option" onclick="checkTrainAnswer(3, 4)">3</div>
+                        <div class="option" onclick="checkTrainAnswer(4, 4)">4</div>
+                        <div class="option" onclick="checkTrainAnswer(5, 4)">5</div>
+                        <div class="option" onclick="checkTrainAnswer(2, 4)">2</div>
+                    </div>
+                </div>
+
+                <div class="feedback" id="train-feedback"></div>
+                <button class="next-button" onclick="loadTrainGame()">Try Another Question! 🎉</button>
+            `;
+        }
+
+        function checkTrainAnswer(selected, correct) {
+            const feedback = document.getElementById('train-feedback');
+            const options = document.querySelectorAll('.option');
+            
+            options.forEach(opt => {
+                if (parseInt(opt.textContent) === selected) {
+                    if (selected === correct) {
+                        opt.classList.add('correct');
+                        feedback.textContent = "Chuk chuk! Correct! 🚂✨";
+                        feedback.className = 'feedback correct';
+                        updateScore(10);
+                        celebrate();
+                    } else {
+                        opt.classList.add('wrong');
+                        feedback.textContent = "Count again! Remember: AFTER means following the engine! 🤔";
+                        feedback.className = 'feedback wrong';
+                    }
+                }
+            });
+        }
+
+        // Score and celebration functions
+        function updateScore(points) {
+            score += points;
+            document.getElementById('score').textContent = score;
+            
+            if (score >= level * 50) {
+                level++;
+                stars++;
+                document.getElementById('level').textContent = level;
+                document.getElementById('stars').textContent = stars;
+            }
+        }
+
+        function celebrate() {
+            const celebration = document.getElementById('celebration');
+            celebration.innerHTML = '';
+            
+            for (let i = 0; i < 20; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.animationDelay = Math.random() * 3 + 's';
+                confetti.style.background = ['#FF6B6B', '#4ECDC4', '#98FB98', '#FFE082', '#FF9A9E'][Math.floor(Math.random() * 5)];
+                celebration.appendChild(confetti);
+            }
+            
+            setTimeout(() => {
+                celebration.innerHTML = '';
+            }, 3000);
+        }
+
+        // Enhanced mobile touch support for drag and drop
+        let touchItem = null;
+        let touchOffset = {x: 0, y: 0};
+
+        // Add touch event listeners for mobile drag and drop
+        function addTouchSupport() {
+            document.addEventListener('touchstart', handleTouchStart, {passive: false});
+            document.addEventListener('touchmove', handleTouchMove, {passive: false});
+            document.addEventListener('touchend', handleTouchEnd, {passive: false});
+        }
+
+        function handleTouchStart(e) {
+            const touch = e.touches[0];
+            const element = document.elementFromPoint(touch.clientX, touch.clientY);
+            
+            if (element && element.classList.contains('sortable-item')) {
+                e.preventDefault();
+                touchItem = element;
+                element.classList.add('dragging');
+                
+                const rect = element.getBoundingClientRect();
+                touchOffset.x = touch.clientX - rect.left;
+                touchOffset.y = touch.clientY - rect.top;
+                
+                // Create visual feedback
+                element.style.position = 'fixed';
+                element.style.zIndex = '1000';
+                element.style.pointerEvents = 'none';
+            }
+        }
+
+        function handleTouchMove(e) {
+            if (!touchItem) return;
+            
+            e.preventDefault();
+            const touch = e.touches[0];
+            
+            touchItem.style.left = (touch.clientX - touchOffset.x) + 'px';
+            touchItem.style.top = (touch.clientY - touchOffset.y) + 'px';
+        }
+
+        function handleTouchEnd(e) {
+            if (!touchItem) return;
+            
+            e.preventDefault();
+            const touch = e.changedTouches[0];
+            const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+            
+            // Reset item styles
+            touchItem.style.position = '';
+            touchItem.style.zIndex = '';
+            touchItem.style.left = '';
+            touchItem.style.top = '';
+            touchItem.style.pointerEvents = '';
+            touchItem.classList.remove('dragging');
+            
+            // Check if dropped on a sorting box
+            const sortingBox = dropTarget?.closest('.sorting-box');
+            if (sortingBox) {
+                const draggedCategory = touchItem.getAttribute('data-category');
+                const dropZoneCategory = sortingBox.getAttribute('data-category');
+                
+                if (draggedCategory === dropZoneCategory) {
+                    sortingBox.appendChild(touchItem);
+                    checkSortingComplete();
+                    updateScore(5);
+                } else {
+                    document.getElementById('sorting-feedback').textContent = "Try a different group! 🤔";
+                    document.getElementById('sorting-feedback').className = 'feedback wrong';
+                }
+            }
+            
+            touchItem = null;
+        }
+
+        // Initialize the game when page loads
+        window.onload = function() {
+            initGame();
+            addTouchSupport();
+        };
+    </script>
+</body>
+</html>
